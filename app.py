@@ -1,39 +1,3 @@
-import os
-import time
-import subprocess
-import sys
-
-# [중요] 1. 도구(라이브러리) 먼저 설치하기
-# 이 부분이 가장 먼저 실행되어야 'ModuleNotFoundError'가 안 뜹니다.
-print("⚙️ [1/3] 시스템 초기화 및 필수 도구 설치 중... (잠시만요!)")
-os.system("pip install -q streamlit pyngrok pandas")
-
-# 2. 설치가 끝난 후 도구 가져오기 (Import)
-try:
-    from pyngrok import ngrok, conf
-except ImportError:
-    # 혹시나 설치가 안 됐을 경우 한 번 더 시도
-    os.system("pip install -q pyngrok")
-    from pyngrok import ngrok, conf
-
-# 3. Ngrok 토큰 입력 (이미 입력했으면 엔터만 쳐도 넘어가게 수정)
-print("\n🔑 [2/3] Ngrok 토큰 확인")
-try:
-    # 토큰이 이미 있는지 확인
-    token = conf.get_default().auth_token
-    if not token:
-        token = input("Ngrok 토큰을 붙여넣고 엔터! (기존에 했으면 그냥 엔터): ").strip()
-        if token:
-            conf.get_default().auth_token = token
-except:
-    token = input("Ngrok 토큰을 붙여넣고 엔터!: ").strip()
-    if token:
-        conf.get_default().auth_token = token
-
-# ---------------------------------------------------------
-# 4. 앱 코드 (삭제 버튼 포함된 최신 버전)
-# ---------------------------------------------------------
-app_source = """
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -106,8 +70,8 @@ st.markdown(css_code, unsafe_allow_html=True)
 if 'reading_list' not in st.session_state:
     st.session_state.reading_list = [{
         "id": 1, 
-        "title": "프로젝트 헤일메리", 
-        "author": "앤디 위어", 
+        "title": "도파민네이션", 
+        "author": "애나 렘키", 
         "progress": 45, 
         "total": 300
     }]
@@ -177,20 +141,3 @@ with tab2:
             st.markdown("<hr style='margin: 5px 0; border-top: 1px dashed #F8BBD0;'>", unsafe_allow_html=True)
     else:
         st.info("아직 완독한 책이 없어요 🍰")
-"""
-
-with open("app.py", "w", encoding='utf-8') as f:
-    f.write(app_source)
-
-# 5. 서버 실행
-print("🚀 [3/3] 서버 시작 중... (약 5초)")
-ngrok.kill()
-subprocess.Popen(["streamlit", "run", "app.py", "--server.port", "8501"])
-time.sleep(5)
-
-try:
-    public_url = ngrok.connect(8501).public_url
-    print(f"\n✅ 접속 링크: {public_url}\n")
-    print("(링크를 클릭하세요!)")
-except Exception as e:
-    print("❌ 에러:", e)
