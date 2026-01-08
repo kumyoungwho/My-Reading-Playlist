@@ -132,9 +132,14 @@ def mark_done_in_sheet(title):
     try:
         sheet = get_worksheet()
         cell = sheet.find(title)
+        sheet.update_cell(cell.row, 3, 100)  # 진행률 100%로 설정
         sheet.update_cell(cell.row, 5, "done")
         sheet.update_cell(cell.row, 6, datetime.now().strftime("%Y-%m-%d"))
         load_data.clear()
+        # Session State에서도 제거
+        book_keys_to_remove = [k for k in st.session_state.prev_progress.keys() if title in k]
+        for k in book_keys_to_remove:
+            del st.session_state.prev_progress[k]
         return True
     except Exception as e:
         st.error(f"완독 처리 실패: {str(e)}")
@@ -225,8 +230,26 @@ with tab1:
                         time.sleep(0.3)
                         st.rerun()
             
-            # 저장 버튼 (슬라이더 값 반영)
+            # 완독 버튼
             with c2:
+                if st.button("■", key=f"fin_{i}", help="완독 처리"):
+                    if mark_done_in_sheet(book['title']):
+                        st.balloons()
+                        time.sleep(0.5)
+                        st.rerun()
+            
+            # 다음 버튼 (10페이지 앞으로)
+            with c3:
+                if st.button("⏭", key=f"next_{i}", help="10페이지 앞으로"):
+                    page_percent = int(10 * 100 / book['total'])
+                    new_val = min(100, val + page_percent)
+                    if update_progress_in_sheet(book['title'], new_val):
+                        st.session_state.prev_progress[book_key] = new_val
+                        time.sleep(0.3)
+                        st.rerun()
+            
+            # 저장 버튼 (슬라이더 값 반영) - 제일 오른쪽
+            with c4:
                 if st.button("💾", key=f"save_{i}", help="진행률 저장"):
                     if val != int(book['progress']):
                         if update_progress_in_sheet(book['title'], val):
@@ -236,24 +259,6 @@ with tab1:
                             st.rerun()
                     else:
                         st.info("변경사항이 없습니다.")
-            
-            # 완독 버튼
-            with c3:
-                if st.button("■", key=f"fin_{i}", help="완독 처리"):
-                    if mark_done_in_sheet(book['title']):
-                        st.balloons()
-                        time.sleep(0.5)
-                        st.rerun()
-            
-            # 다음 버튼 (10페이지 앞으로)
-            with c4:
-                if st.button("⏭", key=f"next_{i}", help="10페이지 앞으로"):
-                    page_percent = int(10 * 100 / book['total'])
-                    new_val = min(100, val + page_percent)
-                    if update_progress_in_sheet(book['title'], new_val):
-                        st.session_state.prev_progress[book_key] = new_val
-                        time.sleep(0.3)
-                        st.rerun()
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
@@ -263,11 +268,11 @@ with tab1:
 with tab2:
     if finished_list:
         for i, book in enumerate(finished_list):
-            col1, col2 = st.columns([4, 1])
+            col1, col2 = st.columns([5, 1])
             with col1:
                 st.success(f"🏆 {book['title']} ({book.get('date','-')})")
             with col2:
-                if st.button("삭제", key=f"del_{i}"):
+                if st.button("❌", key=f"del_{i}", help="삭제"):
                     if delete_book_from_sheet(book['title']):
                         st.rerun()
     else:
