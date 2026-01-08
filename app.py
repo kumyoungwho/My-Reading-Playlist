@@ -1,202 +1,158 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
-import json
-import time
 
-# =========================================================
-# 설정
-# =========================================================
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8/edit?usp=sharing"
+# =============================
+# 기본 설정
+# =============================
+st.set_page_config(
+    page_title="My Reading Playlist",
+    layout="centered"
+)
 
-# =========================================================
-# CSS (버튼 중앙 정렬 강화)
-# =========================================================
-css_code = """
+# =============================
+# CSS
+# =============================
+st.markdown("""
 <style>
-.stApp { background-color: #FFC0CB !important; }
-
-.book-card {
-    background: white;
-    padding: 20px;
-    border-radius: 16px;
-    text-align: center;
-    margin-bottom: 12px;
-}
-
-.slider-wrap {
+.slider-wrapper {
     position: relative;
-    margin-top: 12px;
+    width: 100%;
+    margin-top: 24px;
 }
 
-.progress-overlay {
+.percent-overlay {
     position: absolute;
     top: -32px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 26px;
-    font-weight: 800;
-    color: #C2185B;
+    font-weight: 700;
+    font-size: 18px;
 }
 
-@media (min-width: 769px) {
-    .progress-overlay { display: none; }
+@media (min-width: 768px) {
+    .percent-overlay {
+        position: static;
+        transform: none;
+        text-align: center;
+        margin-bottom: 12px;
+    }
 }
 
-.button-container {
+.control-buttons {
     display: flex;
     justify-content: center;
-    gap: 24px;
-    margin: 24px 0;
-}
-
-.btn-center {
-    display: flex;
-    justify-content: center;
-}
-
-.stButton > button {
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
+    gap: 28px;
+    margin-top: 28px;
 }
 </style>
-"""
+""", unsafe_allow_html=True)
 
-st.set_page_config(page_title="My Reading Playlist", layout="centered")
-st.markdown(css_code, unsafe_allow_html=True)
+# =============================
+# Google Sheets 연결
+# =============================
+SCOPE = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 
-# =========================================================
-# 구글 시트 연결
-# =========================================================
-@st.cache_resource
-def get_worksheet():
-    creds_json = json.loads(st.secrets["gcp_json"], strict=False)
-    creds = Credentials.from_service_account_info(
-        creds_json,
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]
-    )
-    client = gspread.authorize(creds)
-    return client.open_by_url(SHEET_URL).sheet1
+creds = Credentials.from_service_account_file(
+    "service_account.json",
+    scopes=SCOPE
+)
 
-def load_data():
-    sheet = get_worksheet()
-    records = sheet.get_all_records()
-    if not records:
-        return [], []
-    df = pd.DataFrame(records)
-    df["row"] = df.index + 2
-    return (
-        df[df["status"] == "reading"].to_dict("records"),
-        df[df["status"] == "done"].to_dict("records"),
-    )
+client = gspread.authorize(creds)
+sheet = client.open_by_key("1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8")
+worksheet = sheet.sheet1
 
-# =========================================================
-# CRUD 함수
-# =========================================================
-def add_book(title, author, total):
-    get_worksheet().append_row([title, author, 0, total, "reading", ""])
+df = pd.DataFrame(worksheet.get_all_records())
 
-def update_progress(row, val):
-    get_worksheet().update_cell(row, 3, val)
+# =============================
+# 🔒 컬럼 타입 강제
+# =============================
+def safe_int(val, default=0):
+    try:
+        return int(val)
+    except:
+        return default
 
-def mark_done(row):
-    sheet = get_worksheet()
-    sheet.update_cell(row, 3, 100)
-    sheet.update_cell(row, 5, "done")
-    sheet.update_cell(row, 6, datetime.now().strftime("%Y-%m-%d"))
+df["total"] = df["total"].apply(safe_int)
+df["progress"] = df["progress"].apply(safe_int)
 
-def delete_book(row):
-    get_worksheet().delete_rows(row)
+# =============================
+# 첫 번째 책 (임시)
+# =============================
+ROW_INDEX = 2  # 실제 시트 기준 (헤더 다음 줄)
 
-# =========================================================
-# UI
-# =========================================================
-st.title("🎧 My Reading Playlist")
+book = df.iloc[0]
+total_pages = book["total"]
 
-if "prev_progress" not in st.session_state:
-    st.session_state.prev_progress = {}
+# =============================
+# session_state 초기화
+# =============================
+if "progress_slider" not in st.session_state:
+    st.session_state["progress_slider"] = book["progress"]
 
-reading_list, finished_list = load_data()
-tab1, tab2 = st.tabs(["Now Playing", "Done"])
+# =============================
+# 🔄 실시간 저장 함수
+# =============================
+def save_progress():
+    new_val = int(st.session_state["progress_slider"])
+    col = worksheet.find("progress").col
+    worksheet.update_cell(ROW_INDEX, col, new_val)
 
-# =========================================================
-# Now Playing
-# =========================================================
-with tab1:
-    with st.expander("➕ 책 추가하기"):
-        with st.form("add_form"):
-            title = st.text_input("제목")
-            author = st.text_input("저자")
-            total = st.number_input("총 페이지", 1, 5000, 300)
-            submitted = st.form_submit_button("추가")
-        if submitted and title and author:
-            add_book(title, author, total)
-            st.rerun()
+# =============================
+# 헤더
+# =============================
+st.markdown("## 🎧 My Reading Playlist")
 
-    for book in reading_list:
-        st.markdown(f"""
-        <div class="book-card">
-            <h3>🎵 {book['title']}</h3>
-            <p>{book['author']}</p>
-        </div>
-        """, unsafe_allow_html=True)
+# =============================
+# 카드
+# =============================
+st.markdown(
+    """
+    <div style="background:white; padding:24px; border-radius:16px; text-align:center;">
+        <div style="font-size:22px; font-weight:700;">🎵 프로젝트 헤일메리</div>
+        <div style="margin-top:4px; color:#666;">앤디 위어</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-        key = str(book["row"])
-        current = st.session_state.prev_progress.get(key, book["progress"])
+# =============================
+# 슬라이더 (on_change 자동 저장)
+# =============================
+st.slider(
+    "",
+    min_value=0,
+    max_value=100,
+    key="progress_slider",
+    on_change=save_progress
+)
 
-        st.markdown('<div class="slider-wrap">', unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="progress-overlay">{current}%</div>',
-            unsafe_allow_html=True
-        )
+new_val = st.session_state["progress_slider"]
+read_pages = int(total_pages * new_val / 100)
 
-        new_val = st.slider(
-            "progress",
-            0, 100,
-            current,
-            key=f"s_{key}",
-            label_visibility="collapsed"
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div class="slider-wrapper">
+        <div class="percent-overlay">{new_val}%</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-        st.session_state.prev_progress[key] = new_val
-        st.caption(f"📄 {int(book['total'] * new_val / 100)} / {book['total']}p")
+st.caption(f"📄 {read_pages} / {total_pages}p")
 
-        # 버튼 컨테이너 (항상 가운데)
-        st.markdown('<div class="button-container">', unsafe_allow_html=True)
-
-        col_prev = st.button("⏮", key=f"prev_{key}")
-        col_done = st.button("■", key=f"done_{key}")
-        col_next = st.button("⏭", key=f"next_{key}")
-        col_save = st.button("💾", key=f"save_{key}")
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        if col_prev:
-            update_progress(book["row"], max(0, new_val - 5))
-            st.rerun()
-        if col_done:
-            mark_done(book["row"])
-            st.rerun()
-        if col_next:
-            update_progress(book["row"], min(100, new_val + 5))
-            st.rerun()
-        if col_save:
-            update_progress(book["row"], new_val)
-            st.success("저장됨")
-            time.sleep(0.3)
-            st.rerun()
-
-# =========================================================
-# Done
-# =========================================================
-with tab2:
-    for book in finished_list:
-        st.success(f"🏆 {book['title']} ({book['date']})")
-        if st.button("❌ 삭제", key=f"del_{book['row']}"):
-            delete_book(book["row"])
-            st.rerun()
+# =============================
+# 하단 버튼
+# =============================
+st.markdown("""
+<div class="control-buttons">
+    <button>⏮</button>
+    <button>⏸</button>
+    <button>⏭</button>
+    <button>📘</button>
+</div>
+""", unsafe_allow_html=True)
