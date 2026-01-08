@@ -9,7 +9,7 @@ import time
 # =========================================================
 # [설정] 구글 시트 주소 (★여기에 본인 주소를 꼭 넣으세요!★)
 # =========================================================
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8/edit?usp=sharing"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1GZ... (본인 주소) .../edit"
 
 # =========================================================
 # [디자인] CSS (분홍 배경 + 카드 디자인 + 버튼 가운데 정렬)
@@ -91,8 +91,7 @@ def get_worksheet():
         st.error(f"구글 시트 연결 실패: {str(e)}")
         st.stop()
 
-@st.cache_data(ttl=30) 
-def load_data():
+def load_data(_force_refresh=False):
     try:
         sheet = get_worksheet()
         records = sheet.get_all_records()
@@ -111,7 +110,6 @@ def add_book_to_sheet(title, author, total):
         sheet = get_worksheet()
         # 제목, 저자, 진행률(0), 총페이지, 상태(reading), 완료일(빈칸)
         sheet.append_row([title, author, 0, total, "reading", ""])
-        load_data.clear()
         return True
     except Exception as e:
         st.error(f"책 추가 실패: {str(e)}")
@@ -122,7 +120,6 @@ def update_progress_in_sheet(title, new_progress):
         sheet = get_worksheet()
         cell = sheet.find(title)
         sheet.update_cell(cell.row, 3, new_progress)
-        load_data.clear()
         return True
     except Exception as e:
         st.error(f"진행률 업데이트 실패: {str(e)}")
@@ -135,7 +132,6 @@ def mark_done_in_sheet(title):
         sheet.update_cell(cell.row, 3, 100)  # 진행률 100%로 설정
         sheet.update_cell(cell.row, 5, "done")
         sheet.update_cell(cell.row, 6, datetime.now().strftime("%Y-%m-%d"))
-        load_data.clear()
         # Session State에서도 제거
         book_keys_to_remove = [k for k in st.session_state.prev_progress.keys() if title in k]
         for k in book_keys_to_remove:
@@ -150,7 +146,6 @@ def delete_book_from_sheet(title):
         sheet = get_worksheet()
         cell = sheet.find(title)
         sheet.delete_rows(cell.row)
-        load_data.clear()
         return True
     except Exception as e:
         st.error(f"삭제 실패: {str(e)}")
