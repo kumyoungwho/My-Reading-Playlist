@@ -77,30 +77,198 @@ st.markdown(css_code, unsafe_allow_html=True)
 # =========================================================
 @st.cache_resource
 def get_worksheet():
-    # Secrets에서 인증 정보 가져오기
-    json_content = json.loads(st.secrets["gcp_json"], strict=False)
-    creds = Credentials.from_service_account_info(json_content, scopes=["https://www.googleapis.com/auth/spreadsheets"])
-    client = gspread.authorize(creds)
-    sheet = client.open_by_url(SHEET_URL).sheet1
-    return sheet
+    try:
+        # Secrets에서 인증 정보 가져오기
+        json_content = json.loads(st.secrets["gcp_json"], strict=False)
+        creds = Credentials.from_service_account_info(
+            json_content, 
+            scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
+        client = gspread.authorize(creds)
+        sheet = client.open_by_url(SHEET_URL).sheet1
+        return sheet
+    except Exception as e:
+        st.error(f"구글 시트 연결 실패: {str(e)}")
+        st.stop()
 
-@st.cache_data(ttl=10) 
+@st.cache_data(ttl=30) 
 def load_data():
     try:
         sheet = get_worksheet()
         records = sheet.get_all_records()
-        if not records: return [], []
+        if not records: 
+            return [], []
         df = pd.DataFrame(records)
         reading = df[df['status'] == 'reading'].to_dict('records')
         finished = df[df['status'] == 'done'].to_dict('records')
         return reading, finished
     except Exception as e:
+        st.error(f"데이터 로드 실패: {str(e)}")
         return [], []
 
 def add_book_to_sheet(title, author, total):
-    sheet = get_worksheet()
-    # 제목, 저자, 진행률(0), 총페이지, 상태(reading), 완료일(빈칸)
-    sheet.append_row([title, author, 0, total, "reading", ""])
-    load_data.clear()
+    try:
+        sheet = get_worksheet()
+        # 제목, 저자, 진행률(0), 총페이지, 상태(reading), 완료일(빈칸)
+        sheet.append_row([title, author, 0, total, "reading", ""])
+        load_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"책 추가 실패: {str(e)}")
+        return False
 
-def update_progress_in_
+def update_progress_in_sheet(title, new_progress):
+    try:
+        sheet = get_worksheet()
+        cell = sheet.find(title)
+        sheet.update_cell(cell.row, 3, new_progress)
+        load_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"진행률 업데이트 실패: {str(e)}")
+        return False
+
+def mark_done_in_sheet(title):
+    try:
+        sheet = get_worksheet()
+        cell = sheet.find(title)
+        sheet.update_cell(cell.row, 5, "done")
+        sheet.update_cell(cell.row, 6, datetime.now().strftime("%Y-%m-%d"))
+        load_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"완독 처리 실패: {str(e)}")
+        return False
+
+def delete_book_from_sheet(title):
+    try:
+        sheet = get_worksheet()
+        cell = sheet.find(title)
+        sheet.delete_rows(cell.row)
+        load_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"삭제 실패: {str(e)}")
+        return False
+
+# =========================================================
+# [화면] 앱 메인 화면 구성
+# =========================================================
+
+st.title("🎧 My Reading Playlist")
+
+# Session State 초기화
+if 'prev_progress' not in st.session_state:
+    st.session_state.prev_progress = {}
+
+reading_list, finished_list = load_data()
+
+tab1, tab2 = st.tabs(["Now Playing", "Done"])
+
+# 탭 1: 읽고 있는 책 (Now Playing)
+with tab1:
+    with st.expander("➕ 책 추가하기"):
+        with st.form("add_form", clear_on_submit=True):
+            t = st.text_input("제목")
+            a = st.text_input("저자")
+            p = st.number_input("총 페이지", value=300, min_value=1)
+            submitted = st.form_submit_button("추가")
+        
+        # Form 밖에서 처리
+        if submitted:
+            if t and a:
+                if add_book_to_sheet(t, a, p):
+                    st.success(f"'{t}' 추가 완료!")
+                    time.sleep(1)
+                    st.rerun()
+            else:
+                st.error("제목과 저자를 입력해주세요.")
+
+    # 책 목록 보여주기
+    if reading_list:
+        for i, book in enumerate(reading_list):
+            # 1. 책 정보 카드 (HTML)
+            st.markdown(f'''
+            <div class="book-card">
+                <h3 style="margin:0; font-size:1.3rem;">🎵 {book['title']}</h3>
+                <p style="color:#666; font-size:0.9rem;">{book['author']}</p>
+                <h2 style="color:#C2185B; margin: 10px 0;">{book['progress']}%</h2>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            # 2. 슬라이더 (진행률 조절) - Session State로 관리
+            book_key = f"{book['title']}_{i}"
+            prev_val = st.session_state.prev_progress.get(book_key, int(book['progress']))
+            
+            val = st.slider(
+                f"s_{i}", 
+                0, 100, 
+                prev_val, 
+                label_visibility="collapsed",
+                key=f"slider_{i}"
+            )
+            
+            # 3. 현재 페이지 표시
+            curr_p = int(book['total'] * val / 100)
+            st.caption(f"📄 현재 {curr_p}p / 총 {book['total']}p")
+
+            # 4. 버튼 레이아웃 (가운데 정렬)
+            c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
+            
+            # 이전 버튼 (10페이지 뒤로)
+            with c1:
+                if st.button("⏮", key=f"prev_{i}", help="10페이지 뒤로"):
+                    page_percent = int(10 * 100 / book['total'])
+                    new_val = max(0, val - page_percent)
+                    if update_progress_in_sheet(book['title'], new_val):
+                        st.session_state.prev_progress[book_key] = new_val
+                        time.sleep(0.3)
+                        st.rerun()
+            
+            # 저장 버튼 (슬라이더 값 반영)
+            with c2:
+                if st.button("💾", key=f"save_{i}", help="진행률 저장"):
+                    if val != int(book['progress']):
+                        if update_progress_in_sheet(book['title'], val):
+                            st.session_state.prev_progress[book_key] = val
+                            st.success("저장 완료!")
+                            time.sleep(0.5)
+                            st.rerun()
+                    else:
+                        st.info("변경사항이 없습니다.")
+            
+            # 완독 버튼
+            with c3:
+                if st.button("■", key=f"fin_{i}", help="완독 처리"):
+                    if mark_done_in_sheet(book['title']):
+                        st.balloons()
+                        time.sleep(0.5)
+                        st.rerun()
+            
+            # 다음 버튼 (10페이지 앞으로)
+            with c4:
+                if st.button("⏭", key=f"next_{i}", help="10페이지 앞으로"):
+                    page_percent = int(10 * 100 / book['total'])
+                    new_val = min(100, val + page_percent)
+                    if update_progress_in_sheet(book['title'], new_val):
+                        st.session_state.prev_progress[book_key] = new_val
+                        time.sleep(0.3)
+                        st.rerun()
+                
+            st.markdown("<br>", unsafe_allow_html=True)
+    else:
+        st.info("읽고 있는 책이 없습니다. '+ 책 추가하기'를 눌러보세요!")
+
+# 탭 2: 다 읽은 책 (Done)
+with tab2:
+    if finished_list:
+        for i, book in enumerate(finished_list):
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.success(f"🏆 {book['title']} ({book.get('date','-')})")
+            with col2:
+                if st.button("삭제", key=f"del_{i}"):
+                    if delete_book_from_sheet(book['title']):
+                        st.rerun()
+    else:
+        st.info("아직 다 읽은 책이 없어요. 화이팅!")
