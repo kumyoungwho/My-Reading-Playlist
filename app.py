@@ -12,7 +12,7 @@ import time
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8/edit?usp=sharing"
 
 # =========================================================
-# CSS
+# CSS (버튼 중앙 정렬 강화)
 # =========================================================
 css_code = """
 <style>
@@ -45,10 +45,23 @@ css_code = """
     .progress-overlay { display: none; }
 }
 
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 24px 0;
+}
+
+.btn-center {
+    display: flex;
+    justify-content: center;
+}
+
 .stButton > button {
     border-radius: 50%;
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
 }
 </style>
 """
@@ -57,7 +70,7 @@ st.set_page_config(page_title="My Reading Playlist", layout="centered")
 st.markdown(css_code, unsafe_allow_html=True)
 
 # =========================================================
-# Google Sheet
+# 구글 시트 연결
 # =========================================================
 @st.cache_resource
 def get_worksheet():
@@ -74,7 +87,6 @@ def load_data():
     records = sheet.get_all_records()
     if not records:
         return [], []
-
     df = pd.DataFrame(records)
     df["row"] = df.index + 2
     return (
@@ -83,7 +95,7 @@ def load_data():
     )
 
 # =========================================================
-# CRUD
+# CRUD 함수
 # =========================================================
 def add_book(title, author, total):
     get_worksheet().append_row([title, author, 0, total, "reading", ""])
@@ -121,7 +133,6 @@ with tab1:
             author = st.text_input("저자")
             total = st.number_input("총 페이지", 1, 5000, 300)
             submitted = st.form_submit_button("추가")
-
         if submitted and title and author:
             add_book(title, author, total)
             st.rerun()
@@ -155,39 +166,37 @@ with tab1:
         st.session_state.prev_progress[key] = new_val
         st.caption(f"📄 {int(book['total'] * new_val / 100)} / {book['total']}p")
 
-        c1, c2, c3, c4 = st.columns(4)
+        # 버튼 컨테이너 (항상 가운데)
+        st.markdown('<div class="button-container">', unsafe_allow_html=True)
 
-        with c1:
-            if st.button("⏮", key=f"prev_{key}"):
-                update_progress(book["row"], max(0, new_val - 5))
-                st.rerun()
+        col_prev = st.button("⏮", key=f"prev_{key}")
+        col_done = st.button("■", key=f"done_{key}")
+        col_next = st.button("⏭", key=f"next_{key}")
+        col_save = st.button("💾", key=f"save_{key}")
 
-        with c2:
-            if st.button("■", key=f"done_{key}"):
-                mark_done(book["row"])
-                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with c3:
-            if st.button("⏭", key=f"next_{key}"):
-                update_progress(book["row"], min(100, new_val + 5))
-                st.rerun()
-
-        with c4:
-            if st.button("💾", key=f"save_{key}"):
-                update_progress(book["row"], new_val)
-                st.success("저장됨")
-                time.sleep(0.3)
-                st.rerun()
+        if col_prev:
+            update_progress(book["row"], max(0, new_val - 5))
+            st.rerun()
+        if col_done:
+            mark_done(book["row"])
+            st.rerun()
+        if col_next:
+            update_progress(book["row"], min(100, new_val + 5))
+            st.rerun()
+        if col_save:
+            update_progress(book["row"], new_val)
+            st.success("저장됨")
+            time.sleep(0.3)
+            st.rerun()
 
 # =========================================================
 # Done
 # =========================================================
 with tab2:
     for book in finished_list:
-        c1, c2 = st.columns([5, 1])
-        with c1:
-            st.success(f"🏆 {book['title']} ({book['date']})")
-        with c2:
-            if st.button("❌", key=f"del_{book['row']}"):
-                delete_book(book["row"])
-                st.rerun()
+        st.success(f"🏆 {book['title']} ({book['date']})")
+        if st.button("❌ 삭제", key=f"del_{book['row']}"):
+            delete_book(book["row"])
+            st.rerun()
