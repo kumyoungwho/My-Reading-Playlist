@@ -70,6 +70,7 @@ st.markdown(css_code, unsafe_allow_html=True)
 # ---------------- 구글 시트 연결 ----------------
 @st.cache_resource
 def get_worksheet():
+    # Secrets에서 정보 가져오기
     json_content = json.loads(st.secrets["gcp_json"], strict=False)
     creds = Credentials.from_service_account_info(json_content, scopes=["https://www.googleapis.com/auth/spreadsheets"])
     client = gspread.authorize(creds)
@@ -83,6 +84,7 @@ def load_data():
         records = sheet.get_all_records()
         if not records: return [], []
         df = pd.DataFrame(records)
+        # reading과 done 상태별로 나누기
         reading = df[df['status'] == 'reading'].to_dict('records')
         finished = df[df['status'] == 'done'].to_dict('records')
         return reading, finished
@@ -123,5 +125,58 @@ tab1, tab2 = st.tabs(["Now Playing", "Done"])
 
 with tab1:
     with st.expander("➕ 책 추가하기"):
+        # 여기가 폼 시작입니다
         with st.form("add"):
             t = st.text_input("제목")
+            a = st.text_input("저자")
+            p = st.number_input("총 페이지", value=300)
+            # 여기가 문제의 [추가] 버튼입니다! 꼭 들여쓰기가 되어 있어야 해요.
+            submitted = st.form_submit_button("추가")
+            
+            if submitted and t:
+                add_book_to_sheet(t, a, p)
+                st.rerun()
+
+    for i, book in enumerate(reading_list):
+        # 1. 책 정보 카드
+        st.markdown(f'''
+        <div class="book-card">
+            <h3 style="margin:0; font-size:1.3rem;">🎵 {book['title']}</h3>
+            <p style="color:#666; font-size:0.9rem;">{book['author']}</p>
+            <h2 style="color:#C2185B; margin: 10px 0;">{book['progress']}%</h2>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # 2. 슬라이더
+        val = st.slider(f"s_{i}", 0, 100, int(book['progress']), label_visibility="collapsed")
+        
+        # 3. 버튼 레이아웃 (가운데 정렬 적용됨)
+        curr_p = int(book['total'] * val / 100)
+        st.caption(f"📄 현재 {curr_p}p / 총 {book['total']}p")
+
+        c1, c2, c3 = st.columns([1, 1, 1])
+        
+        with c1: 
+            st.button("⏮", key=f"prev_{i}") 
+        with c2:
+            if st.button("■", key=f"fin_{i}", help="완독"):
+                mark_done_in_sheet(book['title'])
+                st.balloons()
+                st.rerun()
+        with c3: 
+            st.button("⏭", key=f"next_{i}")
+
+        if val != int(book['progress']):
+            update_progress_in_sheet(book['title'], val)
+            time.sleep(1)
+            st.rerun()
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+
+with tab2:
+    if finished_list:
+        for i, book in enumerate(finished_list):
+            st.success(f"🏆 {book['title']} ({book.get('date','-')})")
+            if st.button("삭제", key=f"del_{i}"):
+                delete_book_from_sheet(book['title'])
+                st.rerun()
