@@ -11,13 +11,16 @@ import time
 # ---------------------------------------------------------
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8/edit?usp=sharing"
 
-# ---------------- CSS 디자인 (모바일 최적화) ----------------
+# ---------------- CSS 디자인 (모바일 최적화 & 가운데 정렬) ----------------
 css_code = '''
 <style>
+    /* 1. 전체 배경색 (연한 핑크) */
     .stApp { background-color: #FFC0CB !important; }
+    
+    /* 2. 제목 스타일 */
     h1 { color: #C2185B; text-align: center; font-family: sans-serif; font-weight: 800; margin-bottom: 20px; }
     
-    /* 카드 디자인 */
+    /* 3. 책 정보 카드 디자인 */
     .book-card { 
         background: #FFFFFF; 
         padding: 20px; 
@@ -28,12 +31,12 @@ css_code = '''
         margin-bottom: 15px !important; 
     }
     
-    /* 슬라이더 커스텀 */
-    div[data-baseweb="slider"] > div > div:first-child { background-color: #9E9E9E !important; } /* 뒤쪽 회색 */
-    div[data-baseweb="slider"] > div > div:nth-child(2) { background-color: #C2185B !important; } /* 앞쪽 진한 핑크 */
-    div[data-baseweb="slider"] div[role="slider"] { background-color: #C2185B !important; } /* 동그라미 */
+    /* 4. 슬라이더 색상 커스텀 */
+    div[data-baseweb="slider"] > div > div:first-child { background-color: #9E9E9E !important; }
+    div[data-baseweb="slider"] > div > div:nth-child(2) { background-color: #C2185B !important; }
+    div[data-baseweb="slider"] div[role="slider"] { background-color: #C2185B !important; }
     
-    /* 버튼 스타일 */
+    /* 5. 버튼 동그랗게 예쁘게 만들기 */
     .stButton > button { 
         border: none; 
         background: white; 
@@ -46,14 +49,22 @@ css_code = '''
     }
     .stButton > button:hover { background: #F8BBD0; }
     
-    /* 모바일 폰트 크기 조절 */
+    /* 6. 모바일 글자 크기 */
     p { font-size: 14px; }
+
+    /* ★★★ [여기가 추가된 마법의 코드!] 버튼 가운데 정렬 ★★★ */
+    /* 가로줄 전체를 가운데로 */
+    div[data-testid="stHorizontalBlock"] {
+        justify-content: center !important;
+    }
+    /* 버튼 상자 안의 내용물도 가운데로 */
+    div[data-testid="column"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
 </style>
 '''
-
-st.set_page_config(page_title="Pink Player", layout="centered")
-st.markdown(css_code, unsafe_allow_html=True)
-
 # ---------------- 구글 시트 연결 ----------------
 @st.cache_resource
 def get_worksheet():
