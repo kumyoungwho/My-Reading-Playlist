@@ -6,19 +6,21 @@ from google.oauth2.service_account import Credentials
 import json
 import time
 
-# ---------------------------------------------------------
-# [설정] 구글 시트 주소 (★본인 시트 주소로 꼭 바꿔주세요!★)
-# ---------------------------------------------------------
+# =========================================================
+# [설정] 구글 시트 주소 (★여기에 본인 주소를 꼭 넣으세요!★)
+# =========================================================
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8/edit?usp=sharing"
 
-# ---------------- CSS 디자인 (핑크 배경 + 버튼 가운데 정렬) ----------------
+# =========================================================
+# [디자인] CSS (분홍 배경 + 카드 디자인 + 버튼 가운데 정렬)
+# =========================================================
 css_code = '''
 <style>
-    /* 1. 전체 배경색 (연한 핑크) */
+    /* 1. 전체 배경색 (연한 핑크) - 절대 지워지지 않도록 !important 사용 */
     .stApp { background-color: #FFC0CB !important; }
     
     /* 2. 제목 스타일 */
-    h1 { color: #C2185B; text-align: center; font-family: sans-serif; font-weight: 800; margin-bottom: 20px; }
+    h1 { color: #C2185B; text-align: center; font-weight: 800; margin-bottom: 20px; }
     
     /* 3. 책 정보 카드 디자인 */
     .book-card { 
@@ -36,7 +38,7 @@ css_code = '''
     div[data-baseweb="slider"] > div > div:nth-child(2) { background-color: #C2185B !important; }
     div[data-baseweb="slider"] div[role="slider"] { background-color: #C2185B !important; }
     
-    /* 5. 버튼 스타일 */
+    /* 5. 버튼 동그랗게 꾸미기 */
     .stButton > button { 
         border: none; 
         background: white; 
@@ -46,16 +48,18 @@ css_code = '''
         height: 50px; 
         font-size: 20px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     .stButton > button:hover { background: #F8BBD0; }
     
-    /* 6. 모바일 글자 크기 */
-    p { font-size: 14px; }
-
-    /* 7. ★버튼 가운데 정렬★ */
+    /* 6. ★★★ 버튼 가운데 정렬 핵심 코드 ★★★ */
+    /* 버튼이 들어있는 가로줄 전체를 가운데로 */
     div[data-testid="stHorizontalBlock"] {
         justify-content: center !important;
     }
+    /* 각 버튼 상자(컬럼) 내부도 가운데로 */
     div[data-testid="column"] {
         display: flex !important;
         justify-content: center !important;
@@ -64,13 +68,16 @@ css_code = '''
 </style>
 '''
 
+# 페이지 설정 및 CSS 적용
 st.set_page_config(page_title="Pink Player", layout="centered")
 st.markdown(css_code, unsafe_allow_html=True)
 
-# ---------------- 구글 시트 연결 및 데이터 관리 ----------------
+# =========================================================
+# [기능] 구글 시트 연결 및 데이터 처리
+# =========================================================
 @st.cache_resource
 def get_worksheet():
-    # Secrets에서 정보 가져오기
+    # Secrets에서 인증 정보 가져오기
     json_content = json.loads(st.secrets["gcp_json"], strict=False)
     creds = Credentials.from_service_account_info(json_content, scopes=["https://www.googleapis.com/auth/spreadsheets"])
     client = gspread.authorize(creds)
@@ -84,7 +91,6 @@ def load_data():
         records = sheet.get_all_records()
         if not records: return [], []
         df = pd.DataFrame(records)
-        # reading과 done 상태별로 나누기
         reading = df[df['status'] == 'reading'].to_dict('records')
         finished = df[df['status'] == 'done'].to_dict('records')
         return reading, finished
@@ -93,101 +99,8 @@ def load_data():
 
 def add_book_to_sheet(title, author, total):
     sheet = get_worksheet()
+    # 제목, 저자, 진행률(0), 총페이지, 상태(reading), 완료일(빈칸)
     sheet.append_row([title, author, 0, total, "reading", ""])
-    load_data.clear() # 캐시 삭제하여 즉시 반영
-
-def update_progress_in_sheet(title, new_progress):
-    sheet = get_worksheet()
-    cell = sheet.find(title)
-    sheet.update_cell(cell.row, 3, new_progress)
     load_data.clear()
 
-def mark_done_in_sheet(title):
-    sheet = get_worksheet()
-    cell = sheet.find(title)
-    sheet.update_cell(cell.row, 5, "done")
-    sheet.update_cell(cell.row, 6, datetime.now().strftime("%Y-%m-%d"))
-    load_data.clear()
-
-def delete_book_from_sheet(title):
-    sheet = get_worksheet()
-    cell = sheet.find(title)
-    sheet.delete_rows(cell.row)
-    load_data.clear()
-
-# ---------------- 앱 화면 구성 ----------------
-
-st.title("🎧 My Reading Playlist")
-
-reading_list, finished_list = load_data()
-
-tab1, tab2 = st.tabs(["Now Playing", "Done"])
-
-with tab1:
-    with st.expander("➕ 책 추가하기"):
-        # [수정된 부분] 폼 정의 시작
-        with st.form("add_form", clear_on_submit=True):
-            t = st.text_input("제목")
-            a = st.text_input("저자")
-            p = st.number_input("총 페이지", value=300)
-            
-            # [핵심 수정] 버튼이 반드시 with st.form 안에 들여쓰기 되어야 함!
-            submitted = st.form_submit_button("추가")
-            
-            if submitted:
-                if t and a:
-                    add_book_to_sheet(t, a, p)
-                    st.success(f"'{t}' 추가 완료!")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error("제목과 저자를 입력해주세요.")
-
-    # 책 목록 표시
-    for i, book in enumerate(reading_list):
-        # 1. 책 정보 카드
-        st.markdown(f'''
-        <div class="book-card">
-            <h3 style="margin:0; font-size:1.3rem;">🎵 {book['title']}</h3>
-            <p style="color:#666; font-size:0.9rem;">{book['author']}</p>
-            <h2 style="color:#C2185B; margin: 10px 0;">{book['progress']}%</h2>
-        </div>
-        ''', unsafe_allow_html=True)
-        
-        # 2. 슬라이더
-        val = st.slider(f"s_{i}", 0, 100, int(book['progress']), label_visibility="collapsed")
-        
-        # 3. 버튼 레이아웃
-        curr_p = int(book['total'] * val / 100)
-        st.caption(f"📄 현재 {curr_p}p / 총 {book['total']}p")
-
-        c1, c2, c3 = st.columns([1, 1, 1])
-        
-        with c1: 
-            st.button("⏮", key=f"prev_{i}") 
-        with c2:
-            # 완독 버튼 로직
-            if st.button("■", key=f"fin_{i}", help="완독 처리"):
-                mark_done_in_sheet(book['title'])
-                st.balloons()
-                st.rerun()
-        with c3: 
-            st.button("⏭", key=f"next_{i}")
-
-        # 슬라이더 값 변경 시 저장
-        if val != int(book['progress']):
-            update_progress_in_sheet(book['title'], val)
-            time.sleep(1)
-            st.rerun()
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-
-with tab2:
-    if finished_list:
-        for i, book in enumerate(finished_list):
-            st.success(f"🏆 {book['title']} ({book.get('date','-')})")
-            if st.button("삭제", key=f"del_{i}"):
-                delete_book_from_sheet(book['title'])
-                st.rerun()
-    else:
-        st.info("아직 다 읽은 책이 없어요!")
+def update_progress_in_
