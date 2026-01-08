@@ -9,7 +9,7 @@ import time
 # =========================================================
 # [설정] 구글 시트 주소 (★여기에 본인 주소를 꼭 넣으세요!★)
 # =========================================================
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1GZ... (본인 주소) .../edit"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1mOcqHyjRqAgWFOm1_8btKzsLVzP88vv4qDJwmECNtj8/edit?usp=sharing"
 
 # =========================================================
 # [디자인] CSS (분홍 배경 + 카드 디자인 + 버튼 가운데 정렬)
