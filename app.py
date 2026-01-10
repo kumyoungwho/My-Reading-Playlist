@@ -142,3 +142,38 @@ st.slider(
     "",
     0,
     100,
+    key="slider_val",
+    on_change=save_progress,
+    args=(row_index,),
+    label_visibility="collapsed"
+)
+
+read_pages = int(book["total"] * st.session_state.slider_val / 100)
+st.caption(f"📄 {read_pages} / {book['total']}p")
+
+# 하단 버튼 (실제 Streamlit 버튼)
+c1, c2, c3, c4 = st.columns(4)
+
+with c1:
+    if st.button("⏮"):
+        st.session_state.slider_val = max(0, st.session_state.slider_val - 5)
+        save_progress(row_index)
+        st.rerun()
+
+with c2:
+    if st.button("■"):
+        st.session_state.slider_val = 100
+        save_progress(row_index)
+        st.balloons()
+        st.rerun()
+
+with c3:
+    if st.button("⏭"):
+        st.session_state.slider_val = min(100, st.session_state.slider_val + 5)
+        save_progress(row_index)
+        st.rerun()
+
+with c4:
+    if st.button("💾"):
+        save_progress(row_index)
+        st.success("저장 완료")
