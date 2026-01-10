@@ -14,137 +14,215 @@ st.set_page_config(
 )
 
 # =================================================
-# 🎨 CSS — 초기 디자인 100% 유지
+# 🎨 CSS
 # =================================================
 css_code = '''
 <style>
-/* 1. 전체 핑크색 배경 */
+/* 전체 핑크색 배경 */
 .stApp {
     background-color: #FFC0CB !important;
     background-image: none;
 }
 
-/* 2. 제목 스타일 */
+/* 제목 스타일 */
 h1 {
-    color: #C2185B;
+    color: #2C3E50;
     text-align: center;
     font-family: sans-serif;
     font-weight: 800;
-    margin-bottom: 20px;
-    text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
-}
-
-/* 3. 카드 디자인 */
-.book-card {
-    background: #FFFFFF;
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    text-align: center;
-    border: 2px solid #F8BBD0;
-    margin-bottom: 40px !important;
-}
-
-/* 4. 슬라이더 스타일 */
-div[data-baseweb="slider"] {
-    padding-top: 10px !important;
-    padding-bottom: 0px !important;
-}
-
-div[data-baseweb="slider"] > div > div:first-child {
-    background-color: #9E9E9E !important;
-    height: 4px !important;
-}
-
-div[data-baseweb="slider"] > div > div:nth-child(2) {
-    background-color: #212121 !important;
-    height: 4px !important;
-}
-
-div[data-baseweb="slider"] div[role="slider"] {
-    background-color: #212121 !important;
-    box-shadow: none !important;
-    width: 18px !important;
-    height: 18px !important;
-    top: -3px !important;
-}
-
-/* 숫자 팝업 숨김 */
-div[data-testid="stSliderTickBarMin"],
-div[data-testid="stSliderTickBarMax"],
-div[data-baseweb="tooltip"] {
-    display: none !important;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
 }
 
 /* 탭 스타일 */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 10px;
+    justify-content: flex-start;
+}
+
 .stTabs [data-baseweb="tab"] {
-    background: rgba(255,255,255,0.6);
-    border-radius: 12px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
     border: none;
-    margin-right: 10px;
-    padding: 10px 20px !important;
-    font-size: 1.1rem;
+    padding: 12px 24px !important;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
 }
 
 .stTabs [aria-selected="true"] {
     background: #EC407A !important;
     color: white !important;
     font-weight: bold;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Expander 스타일 */
+.streamlit-expanderHeader {
+    background: rgba(255,255,255,0.7) !important;
+    border-radius: 15px !important;
+    border: 2px solid #F8BBD0 !important;
+    padding: 15px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #666 !important;
+}
+
+.streamlit-expanderHeader:hover {
+    background: rgba(255,255,255,0.9) !important;
+}
+
+/* 카드 디자인 */
+.book-card {
+    background: #FFFFFF;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    border: 2px solid #F8BBD0;
+    margin-bottom: 20px;
+}
+
+.book-card h3 {
+    color: #2C3E50;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.book-card .author {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.book-card .progress-text {
+    color: #EC407A;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-top: 10px;
+}
+
+/* 슬라이더 컨테이너 */
+.slider-container {
+    padding: 20px 0;
+    position: relative;
+}
+
+/* 슬라이더 값 표시 */
+.slider-value {
+    position: absolute;
+    top: -5px;
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 600;
+    transform: translateX(-50%);
+}
+
+/* 슬라이더 스타일 */
+div[data-baseweb="slider"] {
+    padding-top: 20px !important;
+    padding-bottom: 10px !important;
+}
+
+div[data-baseweb="slider"] > div > div:first-child {
+    background-color: #E0E0E0 !important;
+    height: 6px !important;
+}
+
+div[data-baseweb="slider"] > div > div:nth-child(2) {
+    background-color: #EC407A !important;
+    height: 6px !important;
+}
+
+div[data-baseweb="slider"] div[role="slider"] {
+    background-color: #2C3E50 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    width: 22px !important;
+    height: 22px !important;
+    top: -2px !important;
+}
+
+/* 슬라이더 틱 숨김 */
+div[data-testid="stSliderTickBarMin"],
+div[data-testid="stSliderTickBarMax"],
+div[data-baseweb="tooltip"] {
+    display: none !important;
+}
+
+/* 페이지 정보 */
+.page-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    color: #2C3E50;
+    font-weight: 600;
 }
 
 /* 버튼 스타일 */
 .stButton > button {
     border: none;
     background: white;
-    color: #000;
+    color: #2C3E50;
     border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: 0.2s;
+    width: 55px;
+    height: 55px;
+    font-size: 1.3rem;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s;
 }
+
 .stButton > button:hover {
     background: #F8BBD0;
     transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* 버튼 정렬 */
-div[data-testid="stHorizontalBlock"] {
-    justify-content: center !important;
-}
 div[data-testid="column"] {
     display: flex !important;
     justify-content: center !important;
+    align-items: center !important;
 }
 
-/* 퍼센트 오버레이 */
-.slider-wrapper {
-    position: relative;
-    width: 100%;
+/* Input 스타일 */
+.stTextInput input, .stNumberInput input {
+    border-radius: 10px !important;
+    border: 2px solid #F8BBD0 !important;
 }
-.percent-overlay {
-    position: absolute;
-    top: -34px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-weight: 800;
-    font-size: 18px;
+
+/* 완료 목록 카드 */
+.done-card {
+    background: rgba(255,255,255,0.8);
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    border: 2px solid #E0E0E0;
 }
-@media (min-width: 768px) {
-    .percent-overlay {
-        position: static;
-        transform: none;
-        text-align: center;
-        margin-bottom: 12px;
-    }
+
+.done-card .title {
+    font-weight: 700;
+    color: #2C3E50;
+    font-size: 1.1rem;
+}
+
+.done-card .author {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.done-card .date {
+    color: #999;
+    font-size: 0.8rem;
+    margin-top: 5px;
 }
 </style>
 '''
 st.markdown(css_code, unsafe_allow_html=True)
 
 # =================================================
-# Google Sheets 인증 (Secrets)
+# Google Sheets 인증
 # =================================================
 @st.cache_resource
 def get_ws():
@@ -167,82 +245,143 @@ ws = get_ws()
 # =================================================
 # 데이터 로드
 # =================================================
-df = pd.DataFrame(ws.get_all_records())
+def load_data():
+    df = pd.DataFrame(ws.get_all_records())
+    
+    def safe_int(x):
+        try:
+            return int(x)
+        except:
+            return 0
+    
+    df["progress"] = df["progress"].apply(safe_int)
+    df["total"] = df["total"].apply(safe_int)
+    
+    return df
 
-def safe_int(x):
-    try:
-        return int(x)
-    except:
-        return 0
+df = load_data()
 
-df["progress"] = df["progress"].apply(safe_int)
-df["total"] = df["total"].apply(safe_int)
+# =================================================
+# 제목
+# =================================================
+st.markdown("<h1>🎧 My Reading Playlist</h1>", unsafe_allow_html=True)
 
-reading = df[df["status"] == "reading"].reset_index(drop=True)
+# =================================================
+# 탭
+# =================================================
+tab1, tab2 = st.tabs(["▶ Now Playing", "✓ Done"])
 
-st.title("🎧 My Reading Playlist")
+# =================================================
+# Now Playing 탭
+# =================================================
+with tab1:
+    # 새 책 추가하기
+    with st.expander("➕ 새 책 추가하기"):
+        with st.form("add_book"):
+            new_title = st.text_input("책 제목")
+            new_author = st.text_input("저자")
+            new_total = st.number_input("총 페이지", min_value=1, value=100, step=1)
+            
+            if st.form_submit_button("추가하기"):
+                if new_title and new_author:
+                    ws.append_row([new_title, new_author, 0, new_total, "reading", ""])
+                    st.success(f"'{new_title}' 추가 완료!")
+                    st.rerun()
+                else:
+                    st.error("제목과 저자를 입력해주세요.")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # 읽고 있는 책
+    reading = df[df["status"] == "reading"].reset_index(drop=True)
+    
+    if reading.empty:
+        st.info("읽고 있는 책이 없습니다.")
+    else:
+        book = reading.iloc[0]
+        row_idx = reading.index[0] + 2
+        
+        if "progress" not in st.session_state:
+            st.session_state.progress = book["progress"]
+        
+        def save():
+            val = int(st.session_state.progress)
+            ws.update_cell(row_idx, 3, val)
+            if val >= 100:
+                ws.update_cell(row_idx, 5, "done")
+                ws.update_cell(row_idx, 6, datetime.now().strftime("%Y-%m-%d"))
+        
+        # 카드
+        st.markdown(f"""
+        <div class="book-card">
+            <h3>🎵 {book['title']}</h3>
+            <div class="author">{book['author']}</div>
+            <div class="progress-text">{st.session_state.progress}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 슬라이더 컨테이너
+        st.markdown('<div class="slider-container">', unsafe_allow_html=True)
+        
+        # 슬라이더 위 값 표시
+        slider_percent = (st.session_state.progress / 100) * 100
+        st.markdown(f'<div class="slider-value" style="left: {slider_percent}%;">{st.session_state.progress}</div>', unsafe_allow_html=True)
+        
+        st.slider(
+            "",
+            0, 100,
+            key="progress",
+            on_change=save,
+            label_visibility="collapsed"
+        )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # 페이지 정보
+        read_pages = int(book["total"] * st.session_state.progress / 100)
+        st.markdown(f"""
+        <div class="page-info">
+            <span>{read_pages} p</span>
+            <span>{book['total']} p</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 버튼
+        col1, col2, col3 = st.columns([1, 1, 1])
+        
+        with col1:
+            if st.button("⏮"):
+                st.session_state.progress = max(0, st.session_state.progress - 5)
+                save()
+                st.rerun()
+        
+        with col2:
+            if st.button("■"):
+                st.session_state.progress = 100
+                save()
+                st.balloons()
+                st.rerun()
+        
+        with col3:
+            if st.button("⏭"):
+                st.session_state.progress = min(100, st.session_state.progress + 5)
+                save()
+                st.rerun()
 
-if reading.empty:
-    st.info("읽고 있는 책이 없습니다.")
-    st.stop()
-
-book = reading.iloc[0]
-row_idx = reading.index[0] + 2
-
-if "progress" not in st.session_state:
-    st.session_state.progress = book["progress"]
-
-def save():
-    val = int(st.session_state.progress)
-    ws.update_cell(row_idx, 3, val)
-    if val >= 100:
-        ws.update_cell(row_idx, 5, "done")
-        ws.update_cell(row_idx, 6, datetime.now().strftime("%Y-%m-%d"))
-
-# 카드
-st.markdown(f"""
-<div class="book-card">
-    <h3>🎵 {book['title']}</h3>
-    <p>{book['author']}</p>
-</div>
-""", unsafe_allow_html=True)
-
-# 퍼센트
-st.markdown(f"""
-<div class="slider-wrapper">
-    <div class="percent-overlay">{st.session_state.progress}%</div>
-</div>
-""", unsafe_allow_html=True)
-
-st.slider(
-    "",
-    0, 100,
-    key="progress",
-    on_change=save,
-    label_visibility="collapsed"
-)
-
-read_pages = int(book["total"] * st.session_state.progress / 100)
-st.caption(f"📄 {read_pages} / {book['total']}p")
-
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    if st.button("⏮"):
-        st.session_state.progress = max(0, st.session_state.progress - 5)
-        save()
-        st.rerun()
-with c2:
-    if st.button("■"):
-        st.session_state.progress = 100
-        save()
-        st.balloons()
-        st.rerun()
-with c3:
-    if st.button("⏭"):
-        st.session_state.progress = min(100, st.session_state.progress + 5)
-        save()
-        st.rerun()
-with c4:
-    if st.button("💾"):
-        save()
-        st.success("저장 완료")
+# =================================================
+# Done 탭
+# =================================================
+with tab2:
+    done = df[df["status"] == "done"].reset_index(drop=True)
+    
+    if done.empty:
+        st.info("완료한 책이 없습니다.")
+    else:
+        for _, book in done.iterrows():
+            st.markdown(f"""
+            <div class="done-card">
+                <div class="title">✓ {book['title']}</div>
+                <div class="author">{book['author']}</div>
+                <div class="date">완료일: {book.get('date', '-')}</div>
+            </div>
+            """, unsafe_allow_html=True)
