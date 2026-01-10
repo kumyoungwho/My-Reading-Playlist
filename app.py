@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # =================================================
-# 🎨 CSS
+# 🎨 CSS - 이미지 기준 완벽 재현
 # =================================================
 css_code = '''
 <style>
@@ -28,7 +28,7 @@ css_code = '''
 h1 {
     color: #2C3E50;
     text-align: center;
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-weight: 800;
     margin-bottom: 30px;
     font-size: 2.5rem;
@@ -36,147 +36,182 @@ h1 {
 
 /* 탭 스타일 */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 10px;
-    justify-content: flex-start;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 25px;
 }
 
 .stTabs [data-baseweb="tab"] {
-    background: rgba(255,255,255,0.7);
-    border-radius: 20px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 25px;
     border: none;
-    padding: 12px 24px !important;
+    padding: 12px 28px !important;
     font-size: 1rem;
     font-weight: 600;
     color: #666;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
 }
 
 .stTabs [aria-selected="true"] {
     background: #EC407A !important;
     color: white !important;
     font-weight: bold;
+    box-shadow: 0 3px 8px rgba(236, 64, 122, 0.3);
 }
 
-/* Expander 스타일 */
+/* Expander 스타일 - 닫혔을 때 */
 .streamlit-expanderHeader {
-    background: rgba(255,255,255,0.7) !important;
+    background: rgba(255,255,255,0.8) !important;
     border-radius: 15px !important;
-    border: 2px solid #F8BBD0 !important;
-    padding: 15px !important;
+    border: 2px solid #E8E8E8 !important;
+    padding: 15px 20px !important;
     font-size: 1rem !important;
     font-weight: 600 !important;
     color: #666 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06) !important;
 }
 
 .streamlit-expanderHeader:hover {
-    background: rgba(255,255,255,0.9) !important;
+    background: rgba(255,255,255,0.95) !important;
+    border-color: #F8BBD0 !important;
+}
+
+/* Expander 내부 */
+details[open] > summary {
+    border-bottom: 1px solid #F8BBD0 !important;
+    margin-bottom: 15px !important;
 }
 
 /* 카드 디자인 */
 .book-card {
     background: #FFFFFF;
-    padding: 30px;
+    padding: 35px;
     border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     text-align: center;
-    border: 2px solid #F8BBD0;
-    margin-bottom: 20px;
+    border: 2px solid #F0F0F0;
+    margin-bottom: 30px;
 }
 
 .book-card h3 {
     color: #2C3E50;
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    font-size: 1.6rem;
+    margin-bottom: 12px;
     font-weight: 700;
 }
 
 .book-card .author {
-    color: #666;
+    color: #888;
     font-size: 1rem;
     margin-bottom: 20px;
 }
 
 .book-card .progress-text {
     color: #EC407A;
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 800;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
-/* 슬라이더 컨테이너 */
-.slider-container {
-    padding: 20px 0;
-    position: relative;
-}
-
-/* 슬라이더 값 표시 */
-.slider-value {
-    position: absolute;
-    top: -5px;
-    font-size: 0.9rem;
-    color: #666;
-    font-weight: 600;
-    transform: translateX(-50%);
+/* 슬라이더 영역 */
+.slider-area {
+    padding: 30px 0 10px 0;
+    margin-bottom: 15px;
 }
 
 /* 슬라이더 스타일 */
 div[data-baseweb="slider"] {
-    padding-top: 20px !important;
-    padding-bottom: 10px !important;
+    padding-top: 25px !important;
+    padding-bottom: 5px !important;
 }
 
 div[data-baseweb="slider"] > div > div:first-child {
-    background-color: #E0E0E0 !important;
-    height: 6px !important;
+    background-color: #D3D3D3 !important;
+    height: 8px !important;
+    border-radius: 10px !important;
 }
 
 div[data-baseweb="slider"] > div > div:nth-child(2) {
     background-color: #EC407A !important;
-    height: 6px !important;
+    height: 8px !important;
+    border-radius: 10px !important;
 }
 
 div[data-baseweb="slider"] div[role="slider"] {
     background-color: #2C3E50 !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-    width: 22px !important;
-    height: 22px !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+    width: 24px !important;
+    height: 24px !important;
     top: -2px !important;
+    border: 3px solid white !important;
 }
 
-/* 슬라이더 틱 숨김 */
+/* 슬라이더 값 표시 - 핸들 바로 위 */
+div[data-baseweb="slider"]::before {
+    content: attr(data-value);
+    position: absolute;
+    top: -8px;
+    left: var(--slider-position, 50%);
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 700;
+    z-index: 100;
+}
+
+/* 슬라이더 틱/툴팁 숨김 */
 div[data-testid="stSliderTickBarMin"],
 div[data-testid="stSliderTickBarMax"],
 div[data-baseweb="tooltip"] {
     display: none !important;
 }
 
-/* 페이지 정보 */
-.page-info {
+/* 페이지 정보 - 슬라이더 아래 양쪽 */
+.page-info-container {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    margin-bottom: 20px;
-    font-size: 1rem;
-    color: #2C3E50;
-    font-weight: 600;
+    align-items: center;
+    margin: 10px 0 25px 0;
+    padding: 0 5px;
 }
 
-/* 버튼 스타일 */
-.stButton > button {
-    border: none;
-    background: white;
+.page-info-left, .page-info-right {
+    font-size: 1.05rem;
     color: #2C3E50;
-    border-radius: 50%;
-    width: 55px;
-    height: 55px;
-    font-size: 1.3rem;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-    transition: all 0.2s;
+    font-weight: 700;
+}
+
+/* 버튼 영역 */
+.button-area {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+/* 버튼 스타일 - 완전한 원형 */
+.stButton > button {
+    border: none !important;
+    background: white !important;
+    color: #2C3E50 !important;
+    border-radius: 50% !important;
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 1.4rem !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12) !important;
+    transition: all 0.2s ease !important;
+    padding: 0 !important;
+    min-height: 60px !important;
 }
 
 .stButton > button:hover {
-    background: #F8BBD0;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background: #F8BBD0 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.18) !important;
+}
+
+.stButton > button:active {
+    transform: translateY(0px) !important;
 }
 
 /* 버튼 정렬 */
@@ -186,36 +221,73 @@ div[data-testid="column"] {
     align-items: center !important;
 }
 
-/* Input 스타일 */
-.stTextInput input, .stNumberInput input {
-    border-radius: 10px !important;
-    border: 2px solid #F8BBD0 !important;
+/* Form 스타일 */
+.stTextInput label, .stNumberInput label {
+    color: #666 !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
 }
 
-/* 완료 목록 카드 */
+.stTextInput input, .stNumberInput input {
+    border-radius: 12px !important;
+    border: 2px solid #E8E8E8 !important;
+    padding: 10px 15px !important;
+    background: rgba(255,255,255,0.9) !important;
+}
+
+.stTextInput input:focus, .stNumberInput input:focus {
+    border-color: #EC407A !important;
+    box-shadow: 0 0 0 1px #EC407A !important;
+}
+
+/* Form 버튼 */
+.stFormSubmitButton > button {
+    background: #EC407A !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 10px 25px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 8px rgba(236, 64, 122, 0.3) !important;
+}
+
+.stFormSubmitButton > button:hover {
+    background: #D81B60 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Done 카드 */
 .done-card {
-    background: rgba(255,255,255,0.8);
-    padding: 15px 20px;
+    background: rgba(255,255,255,0.9);
+    padding: 18px 22px;
     border-radius: 15px;
-    margin-bottom: 10px;
-    border: 2px solid #E0E0E0;
+    margin-bottom: 12px;
+    border: 2px solid #E8E8E8;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
 .done-card .title {
     font-weight: 700;
     color: #2C3E50;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    margin-bottom: 5px;
 }
 
 .done-card .author {
-    color: #666;
-    font-size: 0.9rem;
+    color: #888;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
 }
 
 .done-card .date {
-    color: #999;
-    font-size: 0.8rem;
-    margin-top: 5px;
+    color: #AAA;
+    font-size: 0.85rem;
+}
+
+/* 여백 조정 */
+.block-container {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
 }
 </style>
 '''
@@ -278,14 +350,17 @@ with tab1:
     # 새 책 추가하기
     with st.expander("➕ 새 책 추가하기"):
         with st.form("add_book"):
-            new_title = st.text_input("책 제목")
+            new_title = st.text_input("제목")
             new_author = st.text_input("저자")
-            new_total = st.number_input("총 페이지", min_value=1, value=100, step=1)
+            new_total = st.number_input("총 페이지", min_value=1, value=692, step=1)
             
-            if st.form_submit_button("추가하기"):
+            submitted = st.form_submit_button("추가 ❤️")
+            
+            if submitted:
                 if new_title and new_author:
                     ws.append_row([new_title, new_author, 0, new_total, "reading", ""])
                     st.success(f"'{new_title}' 추가 완료!")
+                    st.cache_resource.clear()
                     st.rerun()
                 else:
                     st.error("제목과 저자를 입력해주세요.")
@@ -310,6 +385,7 @@ with tab1:
             if val >= 100:
                 ws.update_cell(row_idx, 5, "done")
                 ws.update_cell(row_idx, 6, datetime.now().strftime("%Y-%m-%d"))
+                st.cache_resource.clear()
         
         # 카드
         st.markdown(f"""
@@ -320,12 +396,22 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
         
-        # 슬라이더 컨테이너
-        st.markdown('<div class="slider-container">', unsafe_allow_html=True)
+        # 슬라이더 영역
+        st.markdown('<div class="slider-area">', unsafe_allow_html=True)
         
-        # 슬라이더 위 값 표시
-        slider_percent = (st.session_state.progress / 100) * 100
-        st.markdown(f'<div class="slider-value" style="left: {slider_percent}%;">{st.session_state.progress}</div>', unsafe_allow_html=True)
+        # 슬라이더 위 값 표시용 JavaScript
+        slider_position = st.session_state.progress
+        st.markdown(f"""
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {{
+            const slider = document.querySelector('[data-baseweb="slider"]');
+            if (slider) {{
+                slider.setAttribute('data-value', '{slider_position}');
+                slider.style.setProperty('--slider-position', '{slider_position}%');
+            }}
+        }});
+        </script>
+        """, unsafe_allow_html=True)
         
         st.slider(
             "",
@@ -340,13 +426,13 @@ with tab1:
         # 페이지 정보
         read_pages = int(book["total"] * st.session_state.progress / 100)
         st.markdown(f"""
-        <div class="page-info">
-            <span>{read_pages} p</span>
-            <span>{book['total']} p</span>
+        <div class="page-info-container">
+            <div class="page-info-left">{read_pages} p</div>
+            <div class="page-info-right">{book['total']} p</div>
         </div>
         """, unsafe_allow_html=True)
         
-        # 버튼
+        # 버튼 영역
         col1, col2, col3 = st.columns([1, 1, 1])
         
         with col1:
