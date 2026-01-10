@@ -94,10 +94,17 @@ details[open] > summary {
 }
 
 .book-card h3 {
-    color: #2C3E50;
-    font-size: 1.6rem;
+    color: #000000 !important;
+    font-size: 14pt !important;
     margin-bottom: 12px;
     font-weight: 700;
+}
+
+.book-card .book-title {
+    color: #000000 !important;
+    font-size: 14pt !important;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
 .book-card .author {
@@ -268,8 +275,8 @@ div[data-testid="column"] {
 
 .done-card .title {
     font-weight: 700;
-    color: #2C3E50;
-    font-size: 1.15rem;
+    color: #000000 !important;
+    font-size: 14pt !important;
     margin-bottom: 5px;
 }
 
@@ -390,7 +397,7 @@ with tab1:
         # 카드
         st.markdown(f"""
         <div class="book-card">
-            <h3>🎵 {book['title']}</h3>
+            <div class="book-title">🎵 {book['title']}</div>
             <div class="author">{book['author']}</div>
             <div class="progress-text">{st.session_state.progress}%</div>
         </div>
