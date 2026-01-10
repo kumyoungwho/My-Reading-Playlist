@@ -14,10 +14,16 @@ st.set_page_config(
 )
 
 # =================================================
-# CSS (모바일 오버레이 + 버튼 중앙 정렬)
+# CSS (핑크 배경 + 모바일 오버레이 + 버튼 중앙)
 # =================================================
 st.markdown("""
 <style>
+/* 전체 배경색 (연한 핑크) */
+.stApp {
+    background-color: #FFC0CB !important;
+}
+
+/* 슬라이더 퍼센트 오버레이 */
 .slider-wrapper {
     position: relative;
     width: 100%;
@@ -33,6 +39,7 @@ st.markdown("""
     font-size: 18px;
 }
 
+/* 데스크톱에서는 일반 중앙 표시 */
 @media (min-width: 768px) {
     .percent-overlay {
         position: static;
@@ -42,9 +49,12 @@ st.markdown("""
     }
 }
 
+/* 버튼 가로줄 전체 가운데 */
 div[data-testid="stHorizontalBlock"] {
     justify-content: center !important;
 }
+
+/* 각 버튼 컬럼 중앙 */
 div[data-testid="column"] {
     display: flex !important;
     justify-content: center !important;
@@ -120,7 +130,7 @@ if reading_df.empty:
     st.stop()
 
 book = reading_df.iloc[0]
-row_index = reading_df.index[0] + 2  # 실제 시트 row
+row_index = reading_df.index[0] + 2
 
 # 카드
 st.markdown(f"""
@@ -151,7 +161,7 @@ st.slider(
 read_pages = int(book["total"] * st.session_state.slider_val / 100)
 st.caption(f"📄 {read_pages} / {book['total']}p")
 
-# 하단 버튼 (실제 Streamlit 버튼)
+# 하단 버튼
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
